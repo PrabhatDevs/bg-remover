@@ -2,29 +2,22 @@ import axios from "axios";
 
 const API = axios.create({
   baseURL: "https://unemitting-dalilah-inefficaciously.ngrok-free.dev",
-  withCredentials: true, // Required to send/receive cookies
-  withXSRFToken: true, // Required for Laravel 11/12 to auto-read the token
+  withCredentials: true, // 🔥 VERY IMPORTANT
   headers: {
-    Accept: "application/json",
     "Content-Type": "application/json",
-    "ngrok-skip-browser-warning": "true", // Bypass ngrok warning page
+    Accept: "application/json",
   },
 });
 
-export default API;
-// import axios from "axios";
+// Optional: Handle 401 globally
+API.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response && error.response.status === 401) {
+      console.log("Unauthorized - maybe not logged in");
+    }
+    return Promise.reject(error);
+  },
+);
 
-// const API = axios.create({
-//   baseURL: "https://unemitting-dalilah-inefficaciously.ngrok-free.dev",
-//   withCredentials: true, // 🔥 IMPORTANT for Sanctum
-//   headers: {
-//     "ngrok-skip-browser-warning": "true", // 🔥 NGROK bypass
-//     "Content-Type": "application/json",
-//     Accept: "application/json",
-//   },
-// });
-
-// // 🔥 Laravel Sanctum (Laravel 11/12)
-// API.defaults.withXSRFToken = true;
-
-// export default API;
+export default API; // use this for axios.js

@@ -1,11 +1,20 @@
-import { registerUser } from "../api/authApi";
+import {
+  deleteUser,
+  forgotPassword,
+  getUser,
+  loginUser,
+  logoutUser,
+  registerUser,
+  resetPassword,
+  updateUser,
+} from "../api/authApi";
 import { useEffect, useRef, useState } from "react";
 import { gsap } from "gsap";
 import { toast } from "react-toastify";
 import { FaApple, FaGoogle } from "react-icons/fa";
 import { FiStar, FiX } from "react-icons/fi";
 
-function AuthModal({ mode, onClose, onSwitch }) {
+function AuthModal({ mode, onClose, onSwitch, onLoginSuccess }) {
   const overlayRef = useRef(null);
   const cardRef = useRef(null);
 
@@ -38,7 +47,7 @@ function AuthModal({ mode, onClose, onSwitch }) {
         password: form.password,
       });
 
-      console.log(res.data);
+      console.log(res);
       toast.success("Account created successfully");
       onSwitch("signin");
     } catch (error) {
@@ -60,7 +69,8 @@ function AuthModal({ mode, onClose, onSwitch }) {
         password: form.password,
       });
 
-      console.log(res.data);
+      console.log(res);
+      onLoginSuccess?.(res, form.email);
       toast.success("Login successful");
       onClose();
     } catch (error) {
@@ -82,7 +92,7 @@ function AuthModal({ mode, onClose, onSwitch }) {
         email: form.email,
       });
 
-      console.log(res.data);
+      console.log(res);
       toast.success("Reset link sent");
     } catch (error) {
       console.log(error.response?.data);
@@ -110,7 +120,7 @@ function AuthModal({ mode, onClose, onSwitch }) {
         password_confirmation: form.confirm,
       });
 
-      console.log(res.data);
+      console.log(res);
       toast.success("Password reset successfully");
       onSwitch("signin");
     } catch (error) {
@@ -123,7 +133,7 @@ function AuthModal({ mode, onClose, onSwitch }) {
   const handleLogout = async () => {
     try {
       const res = await logoutUser();
-      console.log(res.data);
+      console.log(res);
       toast.success("Logged out successfully");
       onClose();
     } catch (error) {
@@ -136,7 +146,7 @@ function AuthModal({ mode, onClose, onSwitch }) {
   const handleGetUser = async () => {
     try {
       const res = await getUser();
-      console.log(res.data);
+      console.log(res);
     } catch (error) {
       console.log(error.response?.data);
       toast.error(error.response?.data?.message || "Failed to get user");
@@ -150,7 +160,7 @@ function AuthModal({ mode, onClose, onSwitch }) {
         name: form.name,
         email: form.email,
       });
-      console.log(res.data);
+      console.log(res);
     } catch (error) {
       console.log(error.response?.data);
       toast.error(error.response?.data?.message || "Failed to update user");
@@ -161,13 +171,12 @@ function AuthModal({ mode, onClose, onSwitch }) {
   const handleDeleteUser = async () => {
     try {
       const res = await deleteUser();
-      console.log(res.data);
+      console.log(res);
     } catch (error) {
       console.log(error.response?.data);
       toast.error(error.response?.data?.message || "Failed to delete user");
     }
   };
-
 
   useEffect(() => {
     const tl = gsap.timeline();

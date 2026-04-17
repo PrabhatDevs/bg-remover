@@ -3,10 +3,147 @@ import API from "./axios";
 // CSRF
 const csrf = () => API.get("/sanctum/csrf-cookie");
 
-// REGISTER
+// REGISTER USER
 export const registerUser = async (data) => {
-  await csrf();
-  return API.post("/api/v1/register", data);
+  try {
+    const response = await API.post("/api/v1/register", data);
+
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+const postToFirstAvailable = async (endpoints, data) => {
+  const unique = Array.from(new Set(endpoints.filter(Boolean)));
+  let lastError = null;
+
+  for (const endpoint of unique) {
+    try {
+      const response = await API.post(endpoint, data);
+      return response.data;
+    } catch (error) {
+      lastError = error;
+
+      if (error?.response?.status === 404) {
+        continue;
+      }
+
+      throw error;
+    }
+  }
+
+  throw lastError;
+};
+
+export const verifyRegistrationOtp = async (data) => {
+  try {
+    const response = await API.post("/api/v1/verify-otp", data);
+
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const resendRegistrationOtp = async (data) => {
+  try {
+    const response = await API.post("/api/v1/resend-otp", data);
+
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+// LOGIN
+export const loginUser = async (data) => {
+  try {
+    const response = await API.post("/api/v1/login", data);
+
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const forgotPassword = async (data) => {
+  try {
+    const response = await API.post("/api/v1/forgot-password", data);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const resetPassword = async (data) => {
+  try {
+    const response = await API.post("/api/v1/reset-password", data);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const logoutUser = async () => {
+  try {
+    const response = await API.post("/api/v1/logout");
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const getUser = async () => {
+  try {
+    const response = await API.get("/api/v1/user");
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const updateUser = async (data) => {
+  try {
+    const response = await API.put("/api/v1/user", data);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const updateUserPassword = async (data) => {
+  try {
+    const response = await API.put("/api/v1/user/password", data);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const updateUserPhoto = async (file) => {
+  const formData = new FormData();
+  formData.append("avatar", file);
+
+  try {
+    const response = await API.post("/api/v1/user/avatar", formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    });
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const deleteUser = async () => {
+  try {
+    const response = await API.delete("/api/v1/user");
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
 };
 
 // LOGIN
