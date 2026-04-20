@@ -16,30 +16,37 @@ function AuthForm({
   const isRegister = mode === "register";
   const isForgot = mode === "forgot";
   const isRegisterOtp = mode === "register-otp";
+  const isForgotOtpReset = mode === "forgot-otp-reset";
 
   const title = isForgot
     ? "Forgot Password"
     : isRegisterOtp
       ? "Verify OTP"
-      : isRegister
-        ? "Create your account"
-        : "Welcome back";
+      : isForgotOtpReset
+        ? "Reset Your Password"
+        : isRegister
+          ? "Create your account"
+          : "Welcome back";
 
   const subtitle = isForgot
     ? "Enter your email to get reset instructions"
     : isRegisterOtp
       ? "Enter the 6 digit OTP sent to your email"
-      : isRegister
-        ? "Start removing backgrounds for free"
-        : "Sign in to continue to PixelCut";
+      : isForgotOtpReset
+        ? "Enter OTP and set your new password"
+        : isRegister
+          ? "Start removing backgrounds for free"
+          : "Sign in to continue to PixelCut";
 
   const submitLabel = isForgot
     ? "Send reset instructions"
     : isRegisterOtp
       ? "Verify OTP"
-      : isRegister
-        ? "Create Account"
-        : "Sign In";
+      : isForgotOtpReset
+        ? "Reset Password"
+        : isRegister
+          ? "Create Account"
+          : "Sign In";
 
   return (
     <section className="relative z-10 mx-auto w-full max-w-[500px] rounded-[28px] border border-violet-500/25 bg-[rgba(18,15,40,.72)] px-6 pb-8 pt-8 backdrop-blur-xl md:px-10">
@@ -59,7 +66,7 @@ function AuthForm({
           />
         )}
 
-        {!isRegisterOtp ? (
+        {!isRegisterOtp && !isForgotOtpReset ? (
           <Input
             label="Email"
             name="email"
@@ -86,7 +93,7 @@ function AuthForm({
           />
         )}
 
-        {isRegister && (
+        {(isRegister || isForgotOtpReset) && (
           <Input
             label="Confirm password"
             name="confirm"
@@ -97,7 +104,7 @@ function AuthForm({
           />
         )}
 
-        {isRegisterOtp && (
+        {(isRegisterOtp || isForgotOtpReset) && (
           <Input
             label="OTP"
             name="otp"
@@ -114,7 +121,7 @@ function AuthForm({
           <p className="text-sm text-rose-300">{errorMessage}</p>
         ) : null}
 
-        {!isRegister && !isForgot && !isRegisterOtp ? (
+        {!isRegister && !isForgot && !isRegisterOtp && !isForgotOtpReset ? (
           <div className="text-right">
             <Link
               to="/forgot-password"
@@ -129,7 +136,7 @@ function AuthForm({
           {loading ? "Please wait..." : submitLabel}
         </Button>
 
-        {isRegisterOtp && onResendOtp ? (
+        {(isRegisterOtp || isForgotOtpReset) && onResendOtp ? (
           <Button
             type="button"
             variant="secondary"
@@ -159,6 +166,16 @@ function AuthForm({
             className="font-medium text-violet-300 hover:text-violet-200"
           >
             Go back
+          </Link>
+        </p>
+      ) : isForgotOtpReset ? (
+        <p className="mt-5 text-center text-sm text-[#8B85A8]">
+          Remember your password?{" "}
+          <Link
+            to="/login"
+            className="font-medium text-violet-300 hover:text-violet-200"
+          >
+            Sign In
           </Link>
         </p>
       ) : (

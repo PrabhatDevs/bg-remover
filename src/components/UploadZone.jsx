@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { gsap } from "gsap";
 import { toast } from "react-toastify";
+import { removeBackgroundImage } from "../api/authApi";
 import {
   FiCheckCircle,
   FiImage,
@@ -14,12 +15,12 @@ function UploadZone() {
   const [file, setFile] = useState(null);
   const [previewUrl, setPreviewUrl] = useState(null);
   const [resultUrl, setResultUrl] = useState(null);
+  const [resultIsObjectUrl, setResultIsObjectUrl] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState(null);
   const zoneRef = useRef(null);
   const fileInputRef = useRef(null);
   const processingToastRef = useRef(null);
-  const apiKey = import.meta.env.VITE_REMOVEBG_API_KEY;
 
   useEffect(() => {
     if (!file) {
@@ -39,56 +40,81 @@ function UploadZone() {
 
   useEffect(() => {
     return () => {
-      if (resultUrl) URL.revokeObjectURL(resultUrl);
+      if (resultUrl && resultIsObjectUrl) URL.revokeObjectURL(resultUrl);
     };
-  }, [resultUrl]);
+  }, [resultUrl, resultIsObjectUrl]);
 
-  const removeBackground = async (selectedFile) => {
-    if (!apiKey) {
-      const message = "Missing VITE_REMOVEBG_API_KEY in .env.local";
-      setError(message);
-      toast.error(message);
-      return;
+  const extractImageUrl = (payload) => {
+    if (!payload || typeof payload !== "object") {
+      return null;
     }
 
+    const candidates = [
+      payload.processed_image_url,
+      payload.original_image_url,
+      payload.url,
+      payload.image,
+      payload.image_url,
+      payload.output,
+      payload.output_url,
+      payload.processed,
+      payload.processed_url,
+      payload.processedImageUrl,
+      payload.originalImageUrl,
+      payload.result,
+      payload?.data?.processed_image_url,
+      payload?.data?.original_image_url,
+      payload?.data?.url,
+      payload?.data?.image,
+      payload?.data?.image_url,
+    ];
+
+    return (
+      candidates.find(
+        (value) =>
+          typeof value === "string" &&
+          (value.startsWith("http") || value.startsWith("data:image/")),
+      ) || null
+    );
+  };
+
+  const removeBackground = async (selectedFile) => {
     setError(null);
     setIsProcessing(true);
     processingToastRef.current = toast.loading("Removing background...");
 
     try {
-      const formData = new FormData();
-      formData.append("image_file", selectedFile);
-      formData.append("size", "auto");
+      const blob = await removeBackgroundImage(selectedFile);
+      let nextUrl = null;
+      let nextIsObjectUrl = false;
 
-      const response = await fetch("https://api.remove.bg/v1.0/removebg", {
-        method: "POST",
-        headers: {
-          "X-Api-Key": apiKey,
-        },
-        body: formData,
-      });
-
-      if (!response.ok) {
-        let message = `remove.bg request failed (${response.status})`;
+      if (blob instanceof Blob && blob.type.startsWith("image/")) {
+        nextUrl = URL.createObjectURL(blob);
+        nextIsObjectUrl = true;
+      } else if (blob instanceof Blob) {
+        const rawText = await blob.text();
         try {
-          const body = await response.json();
-          if (body?.errors?.length) {
-            message = body.errors
-              .map((item) => item.title || item.detail)
-              .filter(Boolean)
-              .join(" ");
+          const parsed = JSON.parse(rawText);
+          const extractedUrl = extractImageUrl(parsed);
+          if (extractedUrl) {
+            nextUrl = extractedUrl;
+            nextIsObjectUrl = false;
           }
         } catch {
-          // Use generic message.
+          if (rawText.startsWith("http") || rawText.startsWith("data:image/")) {
+            nextUrl = rawText;
+            nextIsObjectUrl = false;
+          }
         }
-        throw new Error(message);
       }
 
-      const blob = await response.blob();
-      const nextUrl = URL.createObjectURL(blob);
+      if (!nextUrl) {
+        throw new Error("Processed image unavailable in API response");
+      }
 
-      if (resultUrl) URL.revokeObjectURL(resultUrl);
+      if (resultUrl && resultIsObjectUrl) URL.revokeObjectURL(resultUrl);
       setResultUrl(nextUrl);
+      setResultIsObjectUrl(nextIsObjectUrl);
       toast.update(processingToastRef.current, {
         render: "Background removed successfully",
         type: "success",
@@ -132,9 +158,33 @@ function UploadZone() {
     }
 
     setFile(selectedFile);
+    if (resultUrl && resultIsObjectUrl) URL.revokeObjectURL(resultUrl);
     setResultUrl(null);
+    setResultIsObjectUrl(false);
     setError(null);
     removeBackground(selectedFile);
+  };
+
+  const triggerDownload = (url, filename) => {
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = filename;
+    document.body.appendChild(anchor);
+    anchor.click();
+    anchor.remove();
+  };
+
+  const handleDownloadProcessedImage = (event) => {
+    event.stopPropagation();
+
+    if (!resultUrl || !file) {
+      return;
+    }
+
+    const outputName = `${file.name.replace(/\.[^.]+$/, "")}-no-bg.png`;
+
+    // Use direct browser download to avoid CORS errors when URL is on another domain.
+    triggerDownload(resultUrl, outputName);
   };
 
   useEffect(() => {
@@ -235,14 +285,13 @@ function UploadZone() {
             </button>
 
             {resultUrl && (
-              <a
-                href={resultUrl}
-                download={`${file.name.replace(/\.[^.]+$/, "")}-no-bg.png`}
-                onClick={(event) => event.stopPropagation()}
+              <button
+                type="button"
+                onClick={handleDownloadProcessedImage}
                 className="inline-flex items-center justify-center rounded-full bg-gradient-to-br from-violet-600 to-blue-600 px-[18px] py-3 text-sm font-semibold text-white shadow-[0_0_30px_rgba(124,58,237,.35)] transition hover:-translate-y-0.5 hover:shadow-[0_0_50px_rgba(124,58,237,.55)]"
               >
                 Download PNG
-              </a>
+              </button>
             )}
           </div>
 

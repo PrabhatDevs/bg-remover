@@ -1,11 +1,20 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import Footer from "../components/Footer";
 import Navbar from "../components/Navbar";
 import AuthForm from "../components/Auth/AuthForm";
 import { forgotPassword } from "../api/authApi";
 
-export default function ForgotPassword({ onSignIn, onSignUp, currentUser, onLogout }) {
+const PENDING_FORGOT_EMAIL_KEY = "pending_forgot_email";
+
+export default function ForgotPassword({
+  onSignIn,
+  onSignUp,
+  currentUser,
+  onLogout,
+}) {
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [form, setForm] = useState({
@@ -32,10 +41,13 @@ export default function ForgotPassword({ onSignIn, onSignUp, currentUser, onLogo
     try {
       setLoading(true);
       await forgotPassword({ email: form.email });
-      toast.success("Reset link sent");
+      sessionStorage.setItem(PENDING_FORGOT_EMAIL_KEY, form.email);
+      toast.success(
+        "OTP sent to your email. Please verify and set new password.",
+      );
+      navigate("/forgot-password/verify-otp");
     } catch (error) {
-      const message =
-        error.response?.data?.message || "Failed to send reset link";
+      const message = error.response?.data?.message || "Failed to send OTP";
       setErrorMessage(message);
       toast.error(message);
     } finally {

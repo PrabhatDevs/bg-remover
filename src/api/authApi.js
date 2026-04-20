@@ -69,7 +69,7 @@ export const loginUser = async (data) => {
 
 export const forgotPassword = async (data) => {
   try {
-    const response = await API.post("/api/v1/forgot-password", data);
+    const response = await API.post("/api/v1/password/forgot", data);
     return response.data;
   } catch (error) {
     throw error;
@@ -78,10 +78,56 @@ export const forgotPassword = async (data) => {
 
 export const resetPassword = async (data) => {
   try {
-    const response = await API.post("/api/v1/reset-password", data);
+    const response = await API.post("/api/v1/password/reset", data);
     return response.data;
   } catch (error) {
     throw error;
+  }
+};
+
+// Resend OTP for forgot password
+export const resendForgotPasswordOtp = async (data) => {
+  try {
+    const response = await API.post("/api/v1/password/resend-otp", data);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const removeBackgroundImage = async (file) => {
+  const formData = new FormData();
+
+  // Keep both keys to support backend field variations.
+  formData.append("image", file);
+  formData.append("image_file", file);
+
+  try {
+    const response = await API.post("/api/v1/remove-bg", formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+      responseType: "blob",
+    });
+
+    return response.data;
+  } catch (error) {
+    if (error?.response?.status !== 404) {
+      throw error;
+    }
+
+    try {
+      const fallbackResponse = await API.post("/remove-bg", formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+        responseType: "blob",
+      });
+
+      return fallbackResponse.data;
+    } catch (fallbackError) {
+      throw fallbackError;
+    }
   }
 };
 

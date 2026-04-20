@@ -5,6 +5,7 @@ import ApiPage from "./pages/ApiPage";
 import ScrollToTopButton from "./components/ScrollToTopButton";
 import FeaturesPage from "./pages/FeaturesPage";
 import ForgotPassword from "./pages/ForgotPassword";
+import ForgotPasswordOtpReset from "./pages/ForgotPasswordOtpReset";
 import GalleryPage from "./pages/GalleryPage";
 import HomePage from "./pages/HomePage";
 import Login from "./pages/Login";
@@ -132,6 +133,16 @@ export default function App() {
               <Navigate to="/" replace />
             ) : (
               <ForgotPassword {...pageProps} />
+            )
+          }
+        />
+        <Route
+          path="/forgot-password/verify-otp"
+          element={
+            currentUser ? (
+              <Navigate to="/" replace />
+            ) : (
+              <ForgotPasswordOtpReset {...pageProps} />
             )
           }
         />
