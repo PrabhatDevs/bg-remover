@@ -47,7 +47,7 @@ function Footer() {
               className="font-syne text-xl font-extrabold"
               style={{ color: "#F0EEFF" }}
             >
-              PixelCut{" "}
+              PixoCut{" "}
               <span className="bg-gradient-to-br from-violet-600 via-blue-600 to-cyan-500 bg-clip-text text-transparent">
                 AI
               </span>

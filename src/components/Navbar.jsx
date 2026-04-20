@@ -59,7 +59,7 @@ function Navbar({ onSignIn, onSignUp, currentUser, onLogout }) {
             <FiStar className="h-[18px] w-[18px]" />
           </div>
           <span className="font-syne text-lg font-extrabold text-[#F0EEFF]">
-            PixelCut
+            PixoCut
             <span className="bg-gradient-to-br from-violet-600 via-blue-600 to-cyan-500 bg-clip-text text-transparent">
               {" "}
               AI
