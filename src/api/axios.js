@@ -1,25 +1,35 @@
 import axios from "axios";
 
 const API = axios.create({
-  // baseURL: "https://api.toolsbyprabhat.com",
-  baseURL: "https://unemitting-dalilah-inefficaciously.ngrok-free.dev/",
-  withCredentials: true, // 🔥 VERY IMPORTANT
+  baseURL: "https://unemitting-dalilah-inefficaciously.ngrok-free.dev",
   headers: {
-    "ngrok-skip-browser-warning": "69420",
-    "Content-Type": "application/json",
-    Accept: "application/json",
+    "ngrok-skip-browser-warning": "69420", // 🔥 ADD THIS
   },
+  // ❌ remove this
+  // withCredentials: true,
 });
 
-// Optional: Handle 401 globally
+// ✅ Attach token automatically
+API.interceptors.request.use((config) => {
+  const token = localStorage.getItem("token");
+
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+
+  return config;
+});
+
+// Optional: Handle 401
 API.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response && error.response.status === 401) {
-      console.log("Unauthorized - maybe not logged in");
+      localStorage.removeItem("token");
+      console.log("Unauthorized - token removed");
     }
     return Promise.reject(error);
-  },
+  }
 );
 
-export default API; // use this for axios.js
+export default API;

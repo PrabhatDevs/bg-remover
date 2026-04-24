@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { gsap } from "gsap";
 import { toast } from "react-toastify";
+import API from "../api/axios";
 import { removeBackgroundImage } from "../api/authApi";
 import {
   FiCheckCircle,
@@ -84,65 +85,64 @@ function UploadZone() {
     processingToastRef.current = toast.loading("Removing background...");
 
     try {
-      const blob = await removeBackgroundImage(selectedFile);
-      let nextUrl = null;
-      let nextIsObjectUrl = false;
-
-      if (blob instanceof Blob && blob.type.startsWith("image/")) {
-        nextUrl = URL.createObjectURL(blob);
-        nextIsObjectUrl = true;
-      } else if (blob instanceof Blob) {
-        const rawText = await blob.text();
-        try {
-          const parsed = JSON.parse(rawText);
-          const extractedUrl = extractImageUrl(parsed);
-          if (extractedUrl) {
-            nextUrl = extractedUrl;
-            nextIsObjectUrl = false;
-          }
-        } catch {
-          if (rawText.startsWith("http") || rawText.startsWith("data:image/")) {
-            nextUrl = rawText;
-            nextIsObjectUrl = false;
-          }
-        }
+      const res = await removeBackgroundImage(selectedFile);
+      const jobId = res.job_id;
+      console.log("FULL RESPONSE:", res.data);
+      if (!jobId) {
+        throw new Error("Job ID not received");
       }
 
-      if (!nextUrl) {
-        throw new Error("Processed image unavailable in API response");
-      }
+      const pollStatus = (jobId) => {
+        const interval = setInterval(async () => {
+          try {
+            const res = await API.get(`/api/v1/bg-remove-status/${jobId}`);
+            console.log("FULL RESPONSE:", res.data);
+            const status = res.data.status?.toLowerCase();
 
-      if (resultUrl && resultIsObjectUrl) URL.revokeObjectURL(resultUrl);
-      setResultUrl(nextUrl);
-      setResultIsObjectUrl(nextIsObjectUrl);
-      toast.update(processingToastRef.current, {
-        render: "Background removed successfully",
-        type: "success",
-        isLoading: false,
-        autoClose: 2500,
-        closeOnClick: true,
-      });
-      processingToastRef.current = null;
+            console.log("Polling status:", status);
+
+            if (status === "completed") {
+              clearInterval(interval);
+
+              setResultUrl(res.data.result_url);
+              setIsProcessing(false);
+
+              console.log("✅ DONE");
+              return;
+            }
+
+            if (status === "failed") {
+              clearInterval(interval);
+              setIsProcessing(false);
+              alert("Processing failed");
+              return;
+            }
+          } catch (err) {
+            clearInterval(interval);
+            setIsProcessing(false);
+            console.error(err);
+          }
+        }, 3000);
+      };
+
+      // 🔥 THIS WAS MISSING
+      pollStatus(jobId);
     } catch (caughtError) {
       const message =
         caughtError instanceof Error
           ? caughtError.message
           : "Unable to remove the background";
+
       setError(message);
 
-      if (processingToastRef.current) {
-        toast.update(processingToastRef.current, {
-          render: message,
-          type: "error",
-          isLoading: false,
-          autoClose: 4000,
-          closeOnClick: true,
-        });
-        processingToastRef.current = null;
-      } else {
-        toast.error(message);
-      }
-    } finally {
+      toast.update(processingToastRef.current, {
+        render: message,
+        type: "error",
+        isLoading: false,
+        autoClose: 4000,
+      });
+
+      processingToastRef.current = null;
       setIsProcessing(false);
     }
   };

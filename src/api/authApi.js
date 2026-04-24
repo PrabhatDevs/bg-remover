@@ -60,6 +60,12 @@ export const resendRegistrationOtp = async (data) => {
 export const loginUser = async (data) => {
   try {
     const response = await API.post("/api/v1/login", data);
+    const { access_token } = response.data;
+    if (!access_token) {
+      throw new Error("Token not received");
+    }
+
+    localStorage.setItem("token", access_token);
 
     return response.data;
   } catch (error) {
@@ -97,40 +103,48 @@ export const resendForgotPasswordOtp = async (data) => {
 
 export const removeBackgroundImage = async (file) => {
   const formData = new FormData();
-
-  // Keep both keys to support backend field variations.
   formData.append("image", file);
-  formData.append("image_file", file);
 
-  try {
-    const response = await API.post("/api/v1/remove-bg", formData, {
-      headers: {
-        "Content-Type": "multipart/form-data",
-      },
-      responseType: "blob",
-    });
+  const response = await API.post("/api/v1/remove-bg", formData);
 
-    return response.data;
-  } catch (error) {
-    if (error?.response?.status !== 404) {
-      throw error;
-    }
-
-    try {
-      const fallbackResponse = await API.post("/remove-bg", formData, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-        responseType: "blob",
-      });
-
-      return fallbackResponse.data;
-    } catch (fallbackError) {
-      throw fallbackError;
-    }
-  }
+  return response.data; // must contain job_id
 };
+export const checkStatus = async (jobId) => {
+  const res = await API.get(`/api/v1/bg-remove-status/${jobId}`);
+  return res.data;
+};
+export const pollForResult = async (jobId, interval = 2000, timeout = 60000) => {
+  const startTime = Date.now();
 
+  return new Promise((resolve, reject) => {
+    const poll = async () => {
+      try {
+        const data = await checkStatus(jobId);
+
+        if (data.status === "completed") {
+          resolve(data);
+          return;
+        }
+
+        if (data.status === "failed") {
+          reject("Processing failed");
+          return;
+        }
+
+        if (Date.now() - startTime > timeout) {
+          reject("Timeout exceeded");
+          return;
+        }
+
+        setTimeout(poll, interval);
+      } catch (err) {
+        reject(err);
+      }
+    };
+
+    poll();
+  });
+};
 export const logoutUser = async () => {
   try {
     const response = await API.post("/api/v1/logout");
@@ -192,6 +206,11 @@ export const deleteUser = async () => {
   }
 };
 
+
+export const getCurrentUser = async () => {
+  const res = await API.get("/api/v1/user");
+  return res.data;
+};
 // LOGIN
 // export const loginUser = async (data) => {
 //   await csrf();
