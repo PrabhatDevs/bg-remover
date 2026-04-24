@@ -39,7 +39,7 @@ const postToFirstAvailable = async (endpoints, data) => {
 export const verifyRegistrationOtp = async (data) => {
   try {
     const response = await API.post("/api/v1/verify-otp", data);
-
+    localStorage.setItem("token", response.data.access_token);
     return response.data;
   } catch (error) {
     throw error;
