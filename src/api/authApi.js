@@ -1,7 +1,7 @@
 import API from "./axios";
 
 // CSRF
-const csrf = () => API.get("/sanctum/csrf-cookie");
+// const csrf = () => API.get("/sanctum/csrf-cookie");
 
 // REGISTER USER
 export const registerUser = async (data) => {
