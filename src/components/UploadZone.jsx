@@ -96,16 +96,26 @@ function UploadZone() {
         const interval = setInterval(async () => {
           try {
             const res = await API.get(`/api/v1/bg-remove-status/${jobId}`);
-            console.log("FULL RESPONSE:", res.data);
+            // console.log("FULL RESPONSE:", res.data);
             const status = res.data.status?.toLowerCase();
 
-            console.log("Polling status:", status);
+            // console.log("Polling status:", status);
 
             if (status === "completed") {
               clearInterval(interval);
 
               setResultUrl(res.data.result_url);
               setIsProcessing(false);
+
+              // 🔥 UPDATE LOADING → SUCCESS
+              toast.update(processingToastRef.current, {
+                render: "Background removed successfully 🎉",
+                type: "success",
+                isLoading: false,
+                autoClose: 2500,
+              });
+
+              processingToastRef.current = null;
 
               console.log("✅ DONE");
               return;
@@ -114,7 +124,16 @@ function UploadZone() {
             if (status === "failed") {
               clearInterval(interval);
               setIsProcessing(false);
-              alert("Processing failed");
+
+              toast.update(processingToastRef.current, {
+                render: "Processing failed ❌",
+                type: "error",
+                isLoading: false,
+                autoClose: 4000,
+              });
+
+              processingToastRef.current = null;
+
               return;
             }
           } catch (err) {

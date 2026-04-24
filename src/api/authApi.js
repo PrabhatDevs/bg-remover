@@ -7,7 +7,14 @@ import API from "./axios";
 export const registerUser = async (data) => {
   try {
     const response = await API.post("/api/v1/register", data);
+    const { access_token } = response.data;
 
+    if (!access_token) {
+      throw new Error("Token not received on register");
+    }
+
+    // 🔥 STORE TOKEN (THIS WAS MISSING)
+    localStorage.setItem("token", access_token);
     return response.data;
   } catch (error) {
     throw error;
