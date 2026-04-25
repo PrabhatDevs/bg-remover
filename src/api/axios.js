@@ -4,6 +4,7 @@ const API = axios.create({
   baseURL: "https://unemitting-dalilah-inefficaciously.ngrok-free.dev",
   headers: {
     "ngrok-skip-browser-warning": "69420", // 🔥 ADD THIS
+    "X-App-Client": "bgremover-frontend-v1"
   },
   // ❌ remove this
   // withCredentials: true,
