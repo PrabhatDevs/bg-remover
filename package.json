@@ -9,6 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@react-oauth/google": "^0.13.5",
     "axios": "^1.15.0",
     "gsap": "^3.12.5",
     "ngrok": "^5.0.0-beta.2",

@@ -87,7 +87,7 @@ function UploadZone() {
     try {
       const res = await removeBackgroundImage(selectedFile);
       const jobId = res.job_id;
-      console.log("FULL RESPONSE:", res.data);
+      // console.log("FULL RESPONSE:", res.data);
       if (!jobId) {
         throw new Error("Job ID not received");
       }
